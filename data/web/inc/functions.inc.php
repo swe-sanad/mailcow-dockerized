@@ -2913,7 +2913,11 @@ function identity_provider($_action = null, $_data = null, $_extra = null) {
 
       // get mapped template
       $user_template = $info['mailcow_template'];
-      $mapper_key = array_search($user_template, $iam_settings['mappers']);
+      // `mappers` is absent when no attribute-to-template mapping is configured (e.g. a generic-oidc
+      // IdP without role mapping). On PHP 8 array_search() with a null haystack throws a TypeError,
+      // which aborts the whole SSO login; default to an empty array so the no-mapping case falls
+      // through to the default-template handling below.
+      $mapper_key = array_search($user_template, $iam_settings['mappers'] ?? []);
 
       // token valid, get mailbox
       $stmt = $pdo->prepare("SELECT
